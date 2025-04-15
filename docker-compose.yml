@@ -1,0 +1,23 @@
+version: '3.9'
+
+services:
+  mak:
+    image: runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04
+    container_name: mak-gpu
+    volumes:
+      - C:\Users\ermiy\Desktop\aimarketing\mak:/workspace
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command: bash
+    stdin_open: true
+    tty: true 

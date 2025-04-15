@@ -1,0 +1,53 @@
+image: python:3.9-slim
+
+variables:
+  DOCKER_REGISTRY: ${CI_REGISTRY}
+  DOCKER_IMAGE: ${CI_REGISTRY_IMAGE}
+  APP_NAME: gen
+
+stages:
+  - test
+  - build
+  - deploy
+
+cache:
+  paths:
+    - .cache/pip
+
+before_script:
+  - apt-get update && apt-get install -y build-essential
+  - pip install -r requirements.txt
+
+test:
+  stage: test
+  script:
+    - python -m pytest tests/
+  only:
+    - merge_requests
+    - main
+
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $DOCKER_IMAGE:$CI_COMMIT_SHA .
+    - docker tag $DOCKER_IMAGE:$CI_COMMIT_SHA $DOCKER_IMAGE:latest
+    - docker push $DOCKER_IMAGE:$CI_COMMIT_SHA
+    - docker push $DOCKER_IMAGE:latest
+  only:
+    - main
+
+deploy:
+  stage: deploy
+  image: mcr.microsoft.com/azure-cli
+  script:
+    - az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
+    - az account set --subscription $AZURE_SUBSCRIPTION_ID
+    - az webapp config container set --name $APP_NAME --resource-group gen-rg --docker-custom-image-name $DOCKER_IMAGE:$CI_COMMIT_SHA
+  only:
+    - main 

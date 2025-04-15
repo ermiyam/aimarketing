@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Learning AI Chat</title>
+    <style>
+        body { 
+            font-family: Arial; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        #chat { 
+            height: 500px; 
+            overflow-y: auto; 
+            border: 1px solid #ddd; 
+            padding: 20px; 
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .message { 
+            margin: 10px 0; 
+            padding: 12px; 
+            border-radius: 8px; 
+            max-width: 80%;
+        }
+        .user { 
+            background: #e3f2fd; 
+            margin-left: 20%; 
+            color: #1565c0;
+        }
+        .ai { 
+            background: #f5f5f5; 
+            margin-right: 20%; 
+            color: #2e7d32;
+        }
+        .input-area { 
+            display: flex; 
+            gap: 10px; 
+        }
+        #input { 
+            flex-grow: 1; 
+            padding: 12px; 
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button { 
+            padding: 12px 24px; 
+            background: #2196f3; 
+            color: white; 
+            border: none; 
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { 
+            background: #1976d2; 
+        }
+        .status {
+            text-align: center;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat"></div>
+    <div class="input-area">
+        <input type="text" id="input" placeholder="Type a message or paste a YouTube URL...">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    <div id="status" class="status"></div>
+
+    <script>
+        const chat = document.getElementById('chat');
+        const input = document.getElementById('input');
+        const status = document.getElementById('status');
+        let sessionId = Date.now().toString();
+
+        async function sendMessage() {
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage('user', message);
+            input.value = '';
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, sessionId })
+                });
+
+                const data = await response.json();
+                addMessage('ai', data.response);
+                updateStatus(data.learned);
+
+            } catch (error) {
+                addMessage('ai', 'Sorry, I encountered an error. Please try again.');
+            }
+        }
+
+        function addMessage(type, content) {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.textContent = content;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function updateStatus(learned) {
+            status.textContent = `Videos learned: ${learned || 0}`;
+        }
+
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Initial message
+        addMessage('ai', 'Hello! I can learn from YouTube videos and chat with you about them. Share a video URL or ask me something!');
+    </script>
+</body>
+</html> 

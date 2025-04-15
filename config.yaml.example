@@ -1,0 +1,170 @@
+# Mak ReSearch Training Configuration
+# Copy this file to config.yaml and modify as needed
+
+# Model Configuration
+model:
+  # Base model to use (Qwen, Mistral, DeepSeek, etc.)
+  base_model: "Qwen/Qwen1.5-7B-Chat"
+  tokenizer: "Qwen/Qwen1.5-7B-Chat"
+  
+  # Model settings
+  use_bfloat16: true  # Use bfloat16 for training
+  device_map: "auto"  # Automatic device placement
+  trust_remote_code: true  # Required for newer models
+  
+  # Model-specific settings
+  qwen:
+    use_flash_attention: true
+    use_cache: false  # Required for training
+    
+  mistral:
+    use_flash_attention: true
+    use_cache: false
+    
+  deepseek:
+    use_flash_attention: true
+    use_cache: false
+
+# Training Configuration
+training:
+  # Basic settings
+  batch_size: 2
+  max_seq_len: 2048
+  num_epochs: 3
+  learning_rate: 2e-5
+  gradient_accumulation_steps: 4
+  warmup_steps: 100
+  weight_decay: 0.01
+  
+  # Optimization
+  optimizer: "adamw"
+  scheduler: "cosine"
+  max_grad_norm: 1.0
+  
+  # Mixed precision
+  fp16: true
+  bf16: false
+  
+  # Checkpointing
+  save_steps: 1000
+  save_total_limit: 3
+  output_dir: "./checkpoints"
+  
+  # Logging
+  logging_steps: 10
+  evaluation_steps: 100
+  report_to: "wandb"
+
+# Search Configuration
+search:
+  # Embedding model
+  embedding_model: "BAAI/bge-large-en-v1.5"
+  embedding_dim: 1024
+  embedding_device: "cuda"
+  
+  # Keyword model
+  keyword_model: "BM25"
+  fusion_strategy: "weighted"
+  embedding_weight: 0.7
+  keyword_weight: 0.3
+  
+  # Search settings
+  top_k: 5
+  score_threshold: 0.5
+  max_tokens: 512
+  
+  # Cache settings
+  use_cache: true
+  cache_path: "./cache/search_results.json"
+  cache_size: 10000
+
+# GRPO Configuration
+grpo:
+  # Loss weights
+  alpha: 0.1  # Search result masking weight
+  beta: 0.5   # Policy loss weight
+  gamma: 0.3  # Value loss weight
+  
+  # PPO settings
+  max_kl: 0.1
+  clip_range: 0.2
+  value_clip_range: 0.2
+  entropy_coef: 0.01
+  
+  # Advantage estimation
+  gae_lambda: 0.95
+  gamma: 0.99
+  
+  # Training settings
+  ppo_epochs: 4
+  mini_batch_size: 1
+
+# Dataset Configuration
+dataset:
+  # MuSiQue settings
+  musique:
+    path: "./data/musique"
+    split: "train"
+    shuffle: true
+    seed: 42
+    
+  # Custom data settings
+  custom:
+    path: "./data/transcripts"
+    format: "jsonl"
+    shuffle: true
+    seed: 42
+    
+  # Preprocessing
+  preprocessing:
+    max_length: 2048
+    padding: "max_length"
+    truncation: true
+    return_tensors: "pt"
+
+# Evaluation Configuration
+evaluation:
+  # Metrics
+  metrics:
+    - "rouge"
+    - "bleu"
+    - "accuracy"
+    - "f1"
+    
+  # Generation settings
+  generation:
+    max_length: 2048
+    num_beams: 1
+    do_sample: true
+    temperature: 0.7
+    top_p: 0.9
+    
+  # Search evaluation
+  search_eval:
+    relevance_threshold: 0.5
+    diversity_threshold: 0.3
+    
+  # Output settings
+  output_dir: "./results"
+  save_predictions: true
+  save_metrics: true
+
+# System Configuration
+system:
+  # Hardware settings
+  num_gpus: 1
+  mixed_precision: "fp16"
+  gradient_checkpointing: true
+  
+  # Memory settings
+  max_memory: "16GB"
+  offload_folder: "./offload"
+  
+  # Logging settings
+  log_level: "INFO"
+  log_file: "./logs/training.log"
+  
+  # Monitoring
+  use_wandb: true
+  wandb_project: "mak-research"
+  wandb_entity: "your-username" 
